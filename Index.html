@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Assets Loader</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #assets-container { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+        .asset-item { border: 1px solid #ddd; padding: 10px; border-radius: 8px; max-width: 300px; text-align: center; }
+        img, video { max-width: 100%; height: auto; border-radius: 4px; }
+        audio { width: 100%; }
+        a { text-decoration: none; color: #0366d6; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>My Dynamic Assets Folder</h2>
+    <div id="assets-container">Loading assets...</div>
+
+    <script>
+        // 🛑 Yahan apna GitHub Username aur Repo Name dalein
+        const githubOwner = 'nmg1ndus'; 
+        const githubRepo = 'assets';
+        const folderPath = 'assets';
+
+        const apiUrl = `https://api.github.com/repos/${githubOwner}/${githubRepo}/contents/${folderPath}`;
+        const container = document.getElementById('assets-container');
+
+        async function loadAssets() {
+            try {
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error("Folder nahi mila ya API limit cross ho gayi.");
+                }
+
+                const files = await response.json();
+                container.innerHTML = ""; // Clear loading text
+
+                files.forEach(file => {
+                    // Sirf files ko process karein (subfolders ko ignore karein)
+                    if (file.type === "file") {
+                        const fileExt = file.name.split('.').pop().toLowerCase();
+                        const fileUrl = file.download_url; // Direct raw file link
+                        
+                        // Ek wrapper div banate hain
+                        const assetDiv = document.createElement('div');
+                        assetDiv.className = "asset-item";
+                        
+                        let element;
+
+                        // Extension check karke sahi element banayein
+                        if (['png', 'jpg', 'jpeg', 'svg', 'webp', 'ico', 'gif'].includes(fileExt)) {
+                            element = document.createElement('img');
+                            element.src = fileUrl;
+                            element.alt = file.name;
+                        } 
+                        else if (['mp4', 'webm', 'ogg'].includes(fileExt)) {
+                            element = document.createElement('video');
+                            element.src = fileUrl;
+                            element.controls = true;
+                        } 
+                        else if (['mp3', 'wav', 'm4a'].includes(fileExt)) {
+                            element = document.createElement('audio');
+                            element.src = fileUrl;
+                            element.controls = true;
+                        } 
+                        else {
+                            // PDF, TXT, ya kisi aur format ke liye Download/View link
+                            element = document.createElement('a');
+                            element.href = fileUrl;
+                            element.target = "_blank";
+                            element.textContent = `📄 Open ${file.name}`;
+                        }
+
+                        // Element ko div mein append karein aur div ko main container mein
+                        assetDiv.appendChild(element);
+                        
+                        // File ka naam bhi niche likh dete hain
+                        const title = document.createElement('p');
+                        title.textContent = file.name;
+                        title.style.fontSize = "12px";
+                        title.style.wordBreak = "break-all";
+                        assetDiv.appendChild(title);
+
+                        container.appendChild(assetDiv);
+                    }
+                });
+
+            } catch (error) {
+                container.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        }
+
+        // Function call
+        loadAssets();
+    </script>
+</body>
+</html>
+
